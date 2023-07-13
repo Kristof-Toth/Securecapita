@@ -14,4 +14,5 @@ public class SmsUtils {
         Message message = Message.creator(new PhoneNumber("+36" + to), new PhoneNumber(FROM_NUMBER), messageBody).create();
         System.out.println(message);
     }
+
 }
