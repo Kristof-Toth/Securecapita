@@ -2,35 +2,46 @@ package hu.test.securecapita.repositroy.implementation;
 
 import hu.test.securecapita.domain.Role;
 import hu.test.securecapita.domain.User;
+import hu.test.securecapita.domain.UserPrincipal;
+import hu.test.securecapita.dto.UserDTO;
 import hu.test.securecapita.exception.ApiException;
 import hu.test.securecapita.repositroy.RoleRepository;
 import hu.test.securecapita.repositroy.UserRepositroy;
+import hu.test.securecapita.rowmapper.UserRowMapper;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.time.DateFormatUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static hu.test.securecapita.enumeration.RoleType.ROLE_USER;
 import static hu.test.securecapita.enumeration.VerificationType.ACCOUNT;
 import static hu.test.securecapita.query.UserQuery.*;
+import static java.util.Arrays.stream;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang3.time.DateUtils.addDays;
 
 @Repository
 @RequiredArgsConstructor
 @Slf4j
-public class UserRepositoryImpl implements UserRepositroy<User> {
-
+public class UserRepositoryImpl implements UserRepositroy<User>, UserDetailsService {
+    private static final String DATE_FORMAT = "yyyy-MM-dd hh:mm:ss";
     private final NamedParameterJdbcTemplate jdbc;
     private final RoleRepository<Role> roleRepository;
     private final BCryptPasswordEncoder encoder;
@@ -64,7 +75,6 @@ public class UserRepositoryImpl implements UserRepositroy<User> {
             throw new ApiException("An error occured. Please try again");
         }
     }
-
 
 
     @Override
@@ -103,5 +113,46 @@ public class UserRepositoryImpl implements UserRepositroy<User> {
         //return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/verify/" + type + "/" + key).toUriString();
         return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/verify/" + type + "/" + key).toUriString();
 
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = getUserByEmail(email);
+
+        if (user == null){
+            log.info("User not found in the database: {}", email);
+            throw new UsernameNotFoundException("User not found in the database");
+        } else {
+            log.info("User found in the database: {}", email);
+            return new UserPrincipal(user, roleRepository.getRoleByUserId(user.getId()).getPermission());
+        }
+    }
+
+    @Override
+    public User getUserByEmail(String email) {
+        try {
+            User user = jdbc.queryForObject(SELECT_USER_BY_EMAIL_QUERY, Map.of("email", email), new UserRowMapper());
+            return user;
+        } catch (EmptyResultDataAccessException exception) {
+            throw new ApiException("No user found by email: " + email);
+        } catch (Exception exception) {
+            log.error(exception.getMessage());
+            throw new ApiException("An error occured. Please try again");
+        }
+    }
+
+    @Override
+    public void sendVerificationCode(UserDTO user) {
+        String expirationDate = DateFormatUtils.format(addDays(new Date(), 1), DATE_FORMAT);
+        String verificationCode = RandomStringUtils.randomAlphabetic(8).toUpperCase();
+
+        try {
+            jdbc.update(DELETE_VERIFICATION_CODE_BY_UER_ID, Map.of("id", user.getId()));
+            jdbc.update(INSERT_VERIFICATION_CODE_QUERY, Map.of("userId", user.getId(), "code", verificationCode, "expirationDate", expirationDate));
+            //sendSMS(user.getPhone(), "From: SecureCapita \nVerification code\n" + verificationCode);
+        } catch (Exception exception) {
+            log.error(exception.getMessage());
+            throw new ApiException("An error occured. Please try again");
+        }
     }
 }
