@@ -8,6 +8,7 @@ import hu.test.securecapita.exception.ApiException;
 import hu.test.securecapita.repositroy.RoleRepository;
 import hu.test.securecapita.repositroy.UserRepositroy;
 import hu.test.securecapita.rowmapper.UserRowMapper;
+import hu.test.securecapita.utils.SmsUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +45,7 @@ public class UserRepositoryImpl implements UserRepositroy<User>, UserDetailsServ
     private static final String DATE_FORMAT = "yyyy-MM-dd hh:mm:ss";
     private final NamedParameterJdbcTemplate jdbc;
     private final RoleRepository<Role> roleRepository;
+    private final SmsUtils smsUtils;
     private final BCryptPasswordEncoder encoder;
 
     @Override
@@ -110,7 +112,6 @@ public class UserRepositoryImpl implements UserRepositroy<User>, UserDetailsServ
     }
 
     private String getVerificationUrl(String key, String type){
-        //return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/verify/" + type + "/" + key).toUriString();
         return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/verify/" + type + "/" + key).toUriString();
 
     }
@@ -149,9 +150,41 @@ public class UserRepositoryImpl implements UserRepositroy<User>, UserDetailsServ
         try {
             jdbc.update(DELETE_VERIFICATION_CODE_BY_UER_ID, Map.of("id", user.getId()));
             jdbc.update(INSERT_VERIFICATION_CODE_QUERY, Map.of("userId", user.getId(), "code", verificationCode, "expirationDate", expirationDate));
-            //sendSMS(user.getPhone(), "From: SecureCapita \nVerification code\n" + verificationCode);
+            //smsUtils.sendSMS(user.getPhone(), "From: SecureCapita \nVerification code\n" + verificationCode);
+            log.info("Verification Code: {}", verificationCode);
         } catch (Exception exception) {
             log.error(exception.getMessage());
+            throw new ApiException("An error occured. Please try again");
+        }
+    }
+
+    @Override
+    public User verifyCode(String email, String code) {
+        if (isVerificationCodeExpired(code))
+            throw new ApiException("This code has expired. Please login again");
+        try {
+            User userByCode = jdbc.queryForObject(SELECT_USER_BY_USER_CODE_QUERY, Map.of("code", code), new UserRowMapper());
+            User userByEmail = jdbc.queryForObject(SELECT_USER_BY_EMAIL_QUERY, Map.of("email", email), new UserRowMapper());
+
+            if (userByCode.getEmail().equalsIgnoreCase(userByEmail.getEmail())) {
+                jdbc.update(DELETE_CODE, Map.of("code", code));
+                return userByCode;
+            } else {
+                throw new ApiException("Code is invalid. Please try again");
+            }
+        } catch (EmptyResultDataAccessException exception){
+            throw new ApiException("Unable to find record");
+        } catch (Exception exception){
+            throw new ApiException("An error occured. Please try again");
+        }
+    }
+
+    private Boolean isVerificationCodeExpired(String code) {
+        try {
+            return jdbc.queryForObject(SELECT_CODE_EXPIRATION_QUERY, Map.of("code", code), Boolean.class);
+        } catch (EmptyResultDataAccessException exception){
+            throw new ApiException("This code is not valid. Please login again.");
+        } catch (Exception exception) {
             throw new ApiException("An error occured. Please try again");
         }
     }
