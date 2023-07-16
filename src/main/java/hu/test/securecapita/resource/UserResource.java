@@ -5,15 +5,19 @@ import hu.test.securecapita.domain.User;
 import hu.test.securecapita.domain.UserPrincipal;
 import hu.test.securecapita.dto.UserDTO;
 import hu.test.securecapita.dtomapper.UserDTOMapper;
+import hu.test.securecapita.exception.ApiException;
 import hu.test.securecapita.form.LoginForm;
 import hu.test.securecapita.provider.TokenProvider;
 import hu.test.securecapita.service.RoleService;
 import hu.test.securecapita.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -21,6 +25,9 @@ import jakarta.validation.Valid;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.Map;
+
+import static hu.test.securecapita.utils.ExceptionUtils.processError;
+
 
 @RestController
 @RequestMapping(path = "/user")
@@ -30,11 +37,13 @@ public class UserResource {
     private final RoleService roleService;
     private final AuthenticationManager authenticationManager;
     private final TokenProvider tokenProvider;
+    private final HttpServletRequest request;
+    private final HttpServletResponse response;
 
     @PostMapping("/login")
     public ResponseEntity<HttpResponse> login(@RequestBody @Valid LoginForm loginForm){
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginForm.getEmail(), loginForm.getPassword()));
-        UserDTO userDTO = userService.getUserByEmail(loginForm.getEmail());
+        Authentication authentication = authenticate(loginForm.getEmail(), loginForm.getPassword());
+        UserDTO userDTO = getAuthenticatedUser(authentication);
         return userDTO.isUsingMfa() ? sendVerificationCode(userDTO) : sendResponse(userDTO);
     }
 
@@ -52,6 +61,30 @@ public class UserResource {
         );
     }
 
+    @GetMapping("/profile")
+    public ResponseEntity<HttpResponse> profile(Authentication authentication){
+        UserDTO user = userService.getUserByEmail(authentication.getName());
+        return ResponseEntity.ok().body(
+                HttpResponse.builder()
+                        .timeStamp(LocalDateTime.now().toString())
+                        .data(Map.of("user", user))
+                        .message("Profile Retrieved")
+                        .status(HttpStatus.OK)
+                        .statusCode(HttpStatus.OK.value())
+                        .build());
+    }
+
+    @RequestMapping("/error")
+    public ResponseEntity<HttpResponse> handleError(HttpServletRequest request){
+        return ResponseEntity.badRequest().body(
+                HttpResponse.builder()
+                        .timeStamp(LocalDateTime.now().toString())
+                        .reason("There is no mapping for a " + request.getMethod() + " request for this path on the server")
+                        .status(HttpStatus.BAD_REQUEST)
+                        .statusCode(HttpStatus.BAD_REQUEST.value())
+                        .build());
+    }
+
     @GetMapping("/verify/code/{email}/{code}")
     public ResponseEntity<HttpResponse> verifyCode(@PathVariable("email") String email, @PathVariable("code") String code){
         UserDTO userDTO = userService.verifyCode(email, code);
@@ -64,6 +97,20 @@ public class UserResource {
                         .status(HttpStatus.OK)
                         .statusCode(HttpStatus.OK.value())
                         .build());
+    }
+
+    private Authentication authenticate(String email, String password) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
+            return authentication;
+        } catch (Exception exception) {
+            processError(request, response, exception);
+            throw new ApiException(exception.getMessage());
+        }
+    }
+
+    private UserDTO getAuthenticatedUser(Authentication authentication) {
+        return ((UserPrincipal) authentication.getPrincipal()).getUser();
     }
 
     private URI getUri(){
@@ -95,6 +142,6 @@ public class UserResource {
     }
 
     private UserPrincipal getUserPrincipal(UserDTO userDTO) {
-        return new UserPrincipal(UserDTOMapper.toUser(userService.getUserByEmail(userDTO.getEmail())), roleService.getRoleByUserId(userDTO.getId()).getPermission());
+        return new UserPrincipal(UserDTOMapper.toUser(userService.getUserByEmail(userDTO.getEmail())), roleService.getRoleByUserId(userDTO.getId()));
     }
 }
