@@ -114,13 +114,12 @@ public class UserResource {
 
     @RequestMapping("/error")
     public ResponseEntity<HttpResponse> handleError(HttpServletRequest request){
-        return ResponseEntity.badRequest().body(
-                HttpResponse.builder()
+        return new ResponseEntity<>(HttpResponse.builder()
                         .timeStamp(LocalDateTime.now().toString())
                         .reason("There is no mapping for a " + request.getMethod() + " request for this path on the server")
-                        .status(HttpStatus.BAD_REQUEST)
-                        .statusCode(HttpStatus.BAD_REQUEST.value())
-                        .build());
+                        .status(HttpStatus.NOT_FOUND)
+                        .statusCode(HttpStatus.NOT_FOUND.value())
+                        .build(), HttpStatus.NOT_FOUND);
     }
 
     @GetMapping("/verify/code/{email}/{code}")
@@ -132,6 +131,17 @@ public class UserResource {
                         .data(Map.of("user", userDTO, "access_token", tokenProvider.createAccessToken(getUserPrincipal(userDTO)),
                                 "refresh_token", tokenProvider.createRefreshToken(getUserPrincipal(userDTO))))
                         .message("Login Success")
+                        .status(HttpStatus.OK)
+                        .statusCode(HttpStatus.OK.value())
+                        .build());
+    }
+
+    @GetMapping("/verify/account/{key}")
+    public ResponseEntity<HttpResponse> verifyAccount(@PathVariable("key") String key){
+        return ResponseEntity.ok().body(
+                HttpResponse.builder()
+                        .timeStamp(LocalDateTime.now().toString())
+                        .message(userService.verifyAccountKey(key).isEnabled() ? "Account already verified" : "Account verified")
                         .status(HttpStatus.OK)
                         .statusCode(HttpStatus.OK.value())
                         .build());
