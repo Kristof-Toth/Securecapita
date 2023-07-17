@@ -17,4 +17,10 @@ public interface UserRepositroy<T extends User>  {
     void sendVerificationCode(UserDTO user);
 
     User verifyCode(String email, String code);
+
+    void resetPassword(String email);
+
+    User verifyPasswordKey(String key);
+
+    void renewPassword(String key, String password, String confirmPassword);
 }
