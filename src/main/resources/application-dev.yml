@@ -6,8 +6,6 @@ server:
     whitelabel:
       enabled: false
 spring:
-  autoconfigure:
-    exclude: org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
   datasource:
     url: jdbc:mysql://127.0.0.1:3306/securecapita
     password:

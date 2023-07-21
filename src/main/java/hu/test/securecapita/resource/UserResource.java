@@ -7,6 +7,7 @@ import hu.test.securecapita.dto.UserDTO;
 import hu.test.securecapita.dtomapper.UserDTOMapper;
 import hu.test.securecapita.exception.ApiException;
 import hu.test.securecapita.form.LoginForm;
+import hu.test.securecapita.form.UpdateForm;
 import hu.test.securecapita.provider.TokenProvider;
 import hu.test.securecapita.service.RoleService;
 import hu.test.securecapita.service.UserService;
@@ -26,7 +27,8 @@ import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.Map;
 
-import static hu.test.securecapita.utils.ExceptionUtils.processError;
+import static hu.test.securecapita.utils.UserUtils.getAuthentication;
+import static hu.test.securecapita.utils.UserUtils.getLoggedInUser;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 
@@ -45,7 +47,7 @@ public class UserResource {
     @PostMapping("/login")
     public ResponseEntity<HttpResponse> login(@RequestBody @Valid LoginForm loginForm){
         Authentication authentication = authenticate(loginForm.getEmail(), loginForm.getPassword());
-        UserDTO userDTO = getAuthenticatedUser(authentication);
+        UserDTO userDTO = getLoggedInUser(authentication);
         return userDTO.isUsingMfa() ? sendVerificationCode(userDTO) : sendResponse(userDTO);
     }
 
@@ -65,12 +67,25 @@ public class UserResource {
 
     @GetMapping("/profile")
     public ResponseEntity<HttpResponse> profile(Authentication authentication){
-        UserDTO user = userService.getUserByEmail(authentication.getName());
+        UserDTO user = userService.getUserByEmail(getAuthentication(authentication).getEmail());
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .timeStamp(LocalDateTime.now().toString())
                         .data(Map.of("user", user))
                         .message("Profile Retrieved")
+                        .status(HttpStatus.OK)
+                        .statusCode(HttpStatus.OK.value())
+                        .build());
+    }
+
+    @PatchMapping("/update")
+    public ResponseEntity<HttpResponse> updateUser(@RequestBody @Valid UpdateForm user){
+        UserDTO updatedUser = userService.updateUserDetails(user);
+        return ResponseEntity.ok().body(
+                HttpResponse.builder()
+                        .timeStamp(LocalDateTime.now().toString())
+                        .data(Map.of("user", updatedUser))
+                        .message("User updated")
                         .status(HttpStatus.OK)
                         .statusCode(HttpStatus.OK.value())
                         .build());
@@ -153,7 +168,7 @@ public class UserResource {
     public ResponseEntity<HttpResponse> refreshToken(HttpServletRequest request){
         if (isHeaderTokenValid(request)){
             String token = request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length());
-            UserDTO user = userService.getUserByEmail(tokenProvider.getSubject(token, request));
+            UserDTO user = userService.getUserById(tokenProvider.getSubject(token, request));
             return ResponseEntity.ok().body(
                     HttpResponse.builder()
                             .timeStamp(LocalDateTime.now().toString())
@@ -181,14 +196,12 @@ public class UserResource {
             Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
             return authentication;
         } catch (Exception exception) {
-            processError(request, response, exception);
+            //processError(request, response, exception);
             throw new ApiException(exception.getMessage());
         }
     }
 
-    private UserDTO getAuthenticatedUser(Authentication authentication) {
-        return ((UserPrincipal) authentication.getPrincipal()).getUser();
-    }
+
 
     private URI getUri(){
         return URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/get/<userId>").toUriString());

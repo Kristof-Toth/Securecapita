@@ -4,6 +4,7 @@ import hu.test.securecapita.domain.Role;
 import hu.test.securecapita.domain.User;
 import hu.test.securecapita.dto.UserDTO;
 import hu.test.securecapita.dtomapper.UserDTOMapper;
+import hu.test.securecapita.form.UpdateForm;
 import hu.test.securecapita.repositroy.RoleRepository;
 import hu.test.securecapita.repositroy.UserRepositroy;
 import hu.test.securecapita.service.UserService;
@@ -54,6 +55,16 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO verifyAccountKey(String key) {
         return mapToUserDTO(userRepository.verifyAccountKey(key));
+    }
+
+    @Override
+    public UserDTO updateUserDetails(UpdateForm user) {
+        return mapToUserDTO(userRepository.updateUserDetails(user));
+    }
+
+    @Override
+    public UserDTO getUserById(Long userId) {
+        return mapToUserDTO(userRepository.get(userId));
     }
 
     private UserDTO mapToUserDTO(User user){
