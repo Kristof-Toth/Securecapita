@@ -2,6 +2,7 @@ package hu.test.securecapita.repositroy;
 
 import hu.test.securecapita.domain.User;
 import hu.test.securecapita.dto.UserDTO;
+import hu.test.securecapita.form.UpdateForm;
 
 import java.util.Collection;
 
@@ -25,4 +26,6 @@ public interface UserRepositroy<T extends User>  {
     void renewPassword(String key, String password, String confirmPassword);
 
     User verifyAccountKey(String key);
+
+    User updateUserDetails(UpdateForm user);
 }

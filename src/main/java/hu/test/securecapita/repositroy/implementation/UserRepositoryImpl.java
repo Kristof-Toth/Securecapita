@@ -6,6 +6,7 @@ import hu.test.securecapita.domain.UserPrincipal;
 import hu.test.securecapita.dto.UserDTO;
 import hu.test.securecapita.enumeration.VerificationType;
 import hu.test.securecapita.exception.ApiException;
+import hu.test.securecapita.form.UpdateForm;
 import hu.test.securecapita.repositroy.RoleRepository;
 import hu.test.securecapita.repositroy.UserRepositroy;
 import hu.test.securecapita.rowmapper.UserRowMapper;
@@ -89,7 +90,14 @@ public class UserRepositoryImpl implements UserRepositroy<User>, UserDetailsServ
 
     @Override
     public User get(Long id) {
-        return null;
+        try {
+            return jdbc.queryForObject(SELECT_USER_BY_ID_QUERY, Map.of("id", id), new UserRowMapper());
+        } catch (EmptyResultDataAccessException exception) {
+            throw new ApiException("No user found by id: " + id);
+        } catch (Exception exception) {
+            log.error(exception.getMessage());
+            throw new ApiException("An error occured. Please try again");
+        }
     }
 
     @Override
@@ -100,23 +108,6 @@ public class UserRepositoryImpl implements UserRepositroy<User>, UserDetailsServ
     @Override
     public Boolean delete(Long id) {
         return null;
-    }
-
-    private Integer getEmailCount(String email) {
-        return jdbc.queryForObject(COUNT_USER_EMAIL_QUERY, Map.of("email", email), Integer.class);
-    }
-
-    private SqlParameterSource getSqlParameterSource(User user) {
-        return new MapSqlParameterSource()
-                .addValue("firstName", user.getFirstName())
-                .addValue("lastName", user.getLastName())
-                .addValue("email", user.getEmail())
-                .addValue("password", encoder.encode(user.getPassword()));
-    }
-
-    private String getVerificationUrl(String key, String type) {
-        return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/verify/" + type + "/" + key).toUriString();
-
     }
 
     @Override
@@ -244,6 +235,19 @@ public class UserRepositoryImpl implements UserRepositroy<User>, UserDetailsServ
         }
     }
 
+    @Override
+    public User updateUserDetails(UpdateForm user) {
+        try {
+            jdbc.update(UPDATE_USER_DETAILS_QUERY, getUserDetailsSqlParameterSource(user));
+            return get(user.getId());
+        } catch (EmptyResultDataAccessException exception) {
+            throw new ApiException("No user found by id: " + user.getId());
+        } catch (Exception exception) {
+            log.error(exception.getMessage());
+            throw new ApiException("An error occured. Please try again.");
+        }
+    }
+
     private Boolean isVerificationCodeExpired(String code) {
         try {
             return jdbc.queryForObject(SELECT_CODE_EXPIRATION_QUERY, Map.of("code", code), Boolean.class);
@@ -264,5 +268,34 @@ public class UserRepositoryImpl implements UserRepositroy<User>, UserDetailsServ
             log.error(exception.getMessage());
             throw new ApiException("An error occured. Please try again");
         }
+    }
+
+    private Integer getEmailCount(String email) {
+        return jdbc.queryForObject(COUNT_USER_EMAIL_QUERY, Map.of("email", email), Integer.class);
+    }
+
+    private SqlParameterSource getSqlParameterSource(User user) {
+        return new MapSqlParameterSource()
+                .addValue("firstName", user.getFirstName())
+                .addValue("lastName", user.getLastName())
+                .addValue("email", user.getEmail())
+                .addValue("password", encoder.encode(user.getPassword()));
+    }
+
+    private SqlParameterSource getUserDetailsSqlParameterSource(UpdateForm user) {
+        return new MapSqlParameterSource()
+                .addValue("id", user.getId())
+                .addValue("firstName", user.getFirstName())
+                .addValue("lastName", user.getLastName())
+                .addValue("email", user.getEmail())
+                .addValue("phone", user.getPhone())
+                .addValue("address", user.getAddress())
+                .addValue("title", user.getTitle())
+                .addValue("bio", user.getBio());
+    }
+
+    private String getVerificationUrl(String key, String type) {
+        return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/verify/" + type + "/" + key).toUriString();
+
     }
 }

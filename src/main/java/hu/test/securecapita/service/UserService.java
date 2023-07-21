@@ -2,6 +2,7 @@ package hu.test.securecapita.service;
 
 import hu.test.securecapita.domain.User;
 import hu.test.securecapita.dto.UserDTO;
+import hu.test.securecapita.form.UpdateForm;
 
 public interface UserService {
     UserDTO createUser(User user);
@@ -17,4 +18,8 @@ public interface UserService {
     void renewPassword(String key, String password, String confirmPassword);
 
     UserDTO verifyAccountKey(String key);
+
+    UserDTO updateUserDetails(UpdateForm user);
+
+    UserDTO getUserById(Long userId);
 }
