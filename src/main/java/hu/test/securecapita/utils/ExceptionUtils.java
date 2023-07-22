@@ -18,16 +18,18 @@ import org.springframework.util.MimeTypeUtils;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
 
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.HttpStatus.*;
 
 @Slf4j
 public class ExceptionUtils {
     public static void processError(HttpServletRequest request, HttpServletResponse response, Exception exception){
         if (exception instanceof ApiException || exception instanceof DisabledException ||
             exception instanceof LockedException || exception instanceof InvalidClaimException ||
-            exception instanceof TokenExpiredException || exception instanceof BadCredentialsException){
+            exception instanceof BadCredentialsException){
             HttpResponse httpResponse = getHttpResponse(response, exception.getMessage(), BAD_REQUEST);
+            writeResponse(response, httpResponse);
+        } else if (exception instanceof TokenExpiredException) {
+            HttpResponse httpResponse = getHttpResponse(response, exception.getMessage(), UNAUTHORIZED);
             writeResponse(response, httpResponse);
         } else {
             HttpResponse httpResponse = getHttpResponse(response, "An error occured. Please try again.", INTERNAL_SERVER_ERROR);
