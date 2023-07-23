@@ -8,6 +8,7 @@ import hu.test.securecapita.dtomapper.UserDTOMapper;
 import hu.test.securecapita.exception.ApiException;
 import hu.test.securecapita.form.LoginForm;
 import hu.test.securecapita.form.UpdateForm;
+import hu.test.securecapita.form.UpdatePasswordForm;
 import hu.test.securecapita.provider.TokenProvider;
 import hu.test.securecapita.service.RoleService;
 import hu.test.securecapita.service.UserService;
@@ -159,6 +160,19 @@ public class UserResource {
                 HttpResponse.builder()
                         .timeStamp(LocalDateTime.now().toString())
                         .message(userService.verifyAccountKey(key).isEnabled() ? "Account already verified" : "Account verified")
+                        .status(HttpStatus.OK)
+                        .statusCode(HttpStatus.OK.value())
+                        .build());
+    }
+
+    @PatchMapping("/update/password")
+    public ResponseEntity<HttpResponse> updatePassword(Authentication authentication, @RequestBody @Valid UpdatePasswordForm form){
+        UserDTO userDTO = getAuthentication(authentication);
+        userService.updatePassword(userDTO.getId(), form.getCurrentPassword(), form.getNewPassword(), form.getConfirmNewPassword());
+        return ResponseEntity.ok().body(
+                HttpResponse.builder()
+                        .timeStamp(LocalDateTime.now().toString())
+                        .message("Password updated successfully")
                         .status(HttpStatus.OK)
                         .statusCode(HttpStatus.OK.value())
                         .build());

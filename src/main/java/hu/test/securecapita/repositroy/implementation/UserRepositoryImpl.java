@@ -248,6 +248,25 @@ public class UserRepositoryImpl implements UserRepositroy<User>, UserDetailsServ
         }
     }
 
+    @Override
+    public void updatePassword(Long id, String currentPassword, String newPassword, String confirmNewPassword) {
+        if (!newPassword.equals(confirmNewPassword))
+            throw new ApiException("Passwords dont match, Please try again");
+
+        User user = get(id);
+
+        if (encoder.matches(currentPassword, user.getPassword())) {
+            try {
+                jdbc.update(UPDATE_USER_PASSWORD_BY_ID_QUERY, Map.of("userId", id, "password", encoder.encode(newPassword)));
+            } catch (Exception exception) {
+                log.error(exception.getMessage());
+                throw new ApiException("An error occured. Please try again");
+            }
+        } else
+            throw new ApiException("Incorrect current password, Please try again");
+
+    }
+
     private Boolean isVerificationCodeExpired(String code) {
         try {
             return jdbc.queryForObject(SELECT_CODE_EXPIRATION_QUERY, Map.of("code", code), Boolean.class);

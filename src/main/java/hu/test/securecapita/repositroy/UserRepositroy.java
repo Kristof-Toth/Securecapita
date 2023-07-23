@@ -28,4 +28,6 @@ public interface UserRepositroy<T extends User>  {
     User verifyAccountKey(String key);
 
     User updateUserDetails(UpdateForm user);
+
+    void updatePassword(Long id, String currentPassword, String newPassword, String confirmNewPassword);
 }
