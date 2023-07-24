@@ -3,6 +3,7 @@ package hu.test.securecapita.service;
 import hu.test.securecapita.domain.User;
 import hu.test.securecapita.dto.UserDTO;
 import hu.test.securecapita.form.UpdateForm;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService {
     UserDTO createUser(User user);
@@ -30,4 +31,6 @@ public interface UserService {
     void updateAccountSettings(Long userId, Boolean enabled, Boolean notLocked);
 
     UserDTO toggleMfa(String email);
+
+    void updateImage(UserDTO userDTO, MultipartFile image);
 }

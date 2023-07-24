@@ -3,6 +3,7 @@ package hu.test.securecapita.repositroy;
 import hu.test.securecapita.domain.User;
 import hu.test.securecapita.dto.UserDTO;
 import hu.test.securecapita.form.UpdateForm;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collection;
 
@@ -34,4 +35,6 @@ public interface UserRepositroy<T extends User>  {
     void updateAccountSettings(Long userId, Boolean enabled, Boolean notLocked);
 
     User toggleMfa(String email);
+
+    void updateImage(UserDTO userDTO, MultipartFile image);
 }

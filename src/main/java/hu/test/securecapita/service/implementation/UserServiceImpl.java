@@ -10,6 +10,7 @@ import hu.test.securecapita.repositroy.UserRepositroy;
 import hu.test.securecapita.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -85,6 +86,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO toggleMfa(String email) {
         return mapToUserDTO(userRepository.toggleMfa(email));
+    }
+
+    @Override
+    public void updateImage(UserDTO userDTO, MultipartFile image) {
+        userRepository.updateImage(userDTO, image);
     }
 
     private UserDTO mapToUserDTO(User user){
