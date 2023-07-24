@@ -267,6 +267,15 @@ public class UserRepositoryImpl implements UserRepositroy<User>, UserDetailsServ
 
     }
 
+    @Override
+    public void updateAccountSettings(Long userId, Boolean enabled, Boolean notLocked) {
+        try {
+            jdbc.update(UPDATE_USER_SETTINGS_QUERY, Map.of("userId", userId, "enabled", enabled, "notLocked", notLocked));
+        } catch (Exception exception) {
+            throw new ApiException("An error occured. Please try again");
+        }
+    }
+
     private Boolean isVerificationCodeExpired(String code) {
         try {
             return jdbc.queryForObject(SELECT_CODE_EXPIRATION_QUERY, Map.of("code", code), Boolean.class);

@@ -30,4 +30,6 @@ public interface UserRepositroy<T extends User>  {
     User updateUserDetails(UpdateForm user);
 
     void updatePassword(Long id, String currentPassword, String newPassword, String confirmNewPassword);
+
+    void updateAccountSettings(Long userId, Boolean enabled, Boolean notLocked);
 }
