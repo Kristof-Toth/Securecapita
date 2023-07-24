@@ -28,14 +28,20 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static hu.test.securecapita.enumeration.RoleType.ROLE_USER;
 import static hu.test.securecapita.enumeration.VerificationType.ACCOUNT;
 import static hu.test.securecapita.enumeration.VerificationType.PASSWORD;
 import static hu.test.securecapita.query.UserQuery.*;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.util.Arrays.stream;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
@@ -289,6 +295,40 @@ public class UserRepositoryImpl implements UserRepositroy<User>, UserDetailsServ
         } catch (Exception exception) {
             throw new ApiException("Unable to update Multi-Factor Authentication");
         }
+    }
+
+    @Override
+    public void updateImage(UserDTO userDTO, MultipartFile image) {
+        String userImageUrl = setUserImageUrl(userDTO.getEmail());
+        userDTO.setImageUrl(userImageUrl);
+        saveImage(userDTO.getEmail(), image);
+        jdbc.update(UPDATE_USER_IMAGE_QUERY, Map.of("imageUrl", userImageUrl, "id", userDTO.getId()));
+
+    }
+
+    private String setUserImageUrl(String email) {
+        return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/image/" + email + ".png").toUriString();
+    }
+
+    private void saveImage(String email, MultipartFile image) {
+        Path fileStorageLocation = Paths.get(System.getProperty("user.home") + "/Downloads/images/").toAbsolutePath().normalize();
+        if (!Files.exists(fileStorageLocation)){
+            try {
+                Files.createDirectories(fileStorageLocation);
+            } catch (Exception exception) {
+                log.error(exception.getMessage());
+                throw new ApiException("Unable to create directories to save image");
+            }
+            log.info("Created directories: {}", fileStorageLocation);
+        }
+
+        try {
+            Files.copy(image.getInputStream(), fileStorageLocation.resolve(email + ".png"), REPLACE_EXISTING);
+        } catch (IOException exception) {
+            throw new ApiException(exception.getMessage());
+        }
+        log.info("File saved in: {} folder", fileStorageLocation);
+
     }
 
     private Boolean isVerificationCodeExpired(String code) {
