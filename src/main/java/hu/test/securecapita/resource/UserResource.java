@@ -207,6 +207,19 @@ public class UserResource {
                         .build());
     }
 
+    @PatchMapping("/togglemfa")
+    public ResponseEntity<HttpResponse> toggleMfa(Authentication authentication){
+        UserDTO userDTO = userService.toggleMfa(getAuthentication(authentication).getEmail());
+        return ResponseEntity.ok().body(
+                HttpResponse.builder()
+                        .timeStamp(LocalDateTime.now().toString())
+                        .data(Map.of("user", userService.getUserById(userDTO.getId()), "roles", roleService.getRoles()))
+                        .message("Multi factor authentication updated")
+                        .status(HttpStatus.OK)
+                        .statusCode(HttpStatus.OK.value())
+                        .build());
+    }
+
     @GetMapping("/refresh/token")
     public ResponseEntity<HttpResponse> refreshToken(HttpServletRequest request){
         if (isHeaderTokenValid(request)){
