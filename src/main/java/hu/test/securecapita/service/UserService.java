@@ -26,4 +26,6 @@ public interface UserService {
     void updatePassword(Long id, String currentPassword, String newPassword, String confirmNewPassword);
 
     void updateUserRole(Long id, String roleName);
+
+    void updateAccountSettings(Long userId, Boolean enabled, Boolean notLocked);
 }

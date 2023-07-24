@@ -7,6 +7,7 @@ import hu.test.securecapita.dto.UserDTO;
 import hu.test.securecapita.dtomapper.UserDTOMapper;
 import hu.test.securecapita.exception.ApiException;
 import hu.test.securecapita.form.LoginForm;
+import hu.test.securecapita.form.SettingsForm;
 import hu.test.securecapita.form.UpdateForm;
 import hu.test.securecapita.form.UpdatePasswordForm;
 import hu.test.securecapita.provider.TokenProvider;
@@ -187,6 +188,20 @@ public class UserResource {
                         .timeStamp(LocalDateTime.now().toString())
                         .data(Map.of("user", userService.getUserById(userDTO.getId()), "roles", roleService.getRoles()))
                         .message("Role updated successfully")
+                        .status(HttpStatus.OK)
+                        .statusCode(HttpStatus.OK.value())
+                        .build());
+    }
+
+    @PatchMapping("/update/settings")
+    public ResponseEntity<HttpResponse> updateAccountSetting(Authentication authentication, @RequestBody @Valid SettingsForm form){
+        UserDTO userDTO = getAuthentication(authentication);
+        userService.updateAccountSettings(userDTO.getId(), form.getEnabled(), form.getNotLocked());
+        return ResponseEntity.ok().body(
+                HttpResponse.builder()
+                        .timeStamp(LocalDateTime.now().toString())
+                        .data(Map.of("user", userService.getUserById(userDTO.getId()), "roles", roleService.getRoles()))
+                        .message("Account settings updated successfully")
                         .status(HttpStatus.OK)
                         .statusCode(HttpStatus.OK.value())
                         .build());
