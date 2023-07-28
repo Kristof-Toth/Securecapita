@@ -2,6 +2,7 @@ package hu.test.securecapita.service;
 
 import hu.test.securecapita.domain.Customer;
 import hu.test.securecapita.domain.Invoice;
+import hu.test.securecapita.domain.Stats;
 import org.springframework.data.domain.Page;
 
 public interface CustomerService {
@@ -19,4 +20,6 @@ public interface CustomerService {
     void addInvoiceToCustomer(Long id, Invoice invoice);
 
     Invoice getInvoice(Long id);
+
+    Stats getStats();
 }
