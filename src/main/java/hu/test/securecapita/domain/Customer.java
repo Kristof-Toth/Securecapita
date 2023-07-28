@@ -27,6 +27,7 @@ public class Customer {
     private String name;
     private String email;
     private String type;
+    private String status;
     private String address;
     private String phone;
     private String imageUrl;
