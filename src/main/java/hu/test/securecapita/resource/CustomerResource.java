@@ -33,7 +33,8 @@ public class CustomerResource {
                 HttpResponse.builder()
                         .timeStamp(LocalDateTime.now().toString())
                         .data(Map.of("user", userService.getUserByEmail(user.getEmail()),
-                                "page", customerService.getCustomers(page.orElse(0), size.orElse(10) )))
+                                "page", customerService.getCustomers(page.orElse(0), size.orElse(10)),
+                                "stats", customerService.getStats()))
                         .message("Customers retrieved")
                         .status(HttpStatus.OK)
                         .statusCode(HttpStatus.OK.value())

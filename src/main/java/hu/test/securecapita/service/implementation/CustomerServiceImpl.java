@@ -2,8 +2,10 @@ package hu.test.securecapita.service.implementation;
 
 import hu.test.securecapita.domain.Customer;
 import hu.test.securecapita.domain.Invoice;
+import hu.test.securecapita.domain.Stats;
 import hu.test.securecapita.repositroy.CustomerRepository;
 import hu.test.securecapita.repositroy.InvoiceRepository;
+import hu.test.securecapita.rowmapper.StatsRowMapper;
 import hu.test.securecapita.service.CustomerService;
 import jakarta.transaction.Transactional;
 import lombok.Data;
@@ -12,10 +14,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.Map;
 
+import static hu.test.securecapita.query.CustomerQuery.STATS_QUERY;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 
 @Service
@@ -25,6 +30,7 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 public class CustomerServiceImpl implements CustomerService {
     private final CustomerRepository customerRepository;
     private final InvoiceRepository invoiceRepository;
+    private final NamedParameterJdbcTemplate jdbc;
 
     @Override
     public Customer createCustomer(Customer customer) {
@@ -79,5 +85,10 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public Invoice getInvoice(Long id) {
         return invoiceRepository.findById(id).get();
+    }
+
+    @Override
+    public Stats getStats() {
+        return jdbc.queryForObject(STATS_QUERY, Map.of(), new StatsRowMapper());
     }
 }
