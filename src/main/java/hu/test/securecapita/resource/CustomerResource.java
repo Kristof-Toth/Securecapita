@@ -76,7 +76,7 @@ public class CustomerResource {
                 HttpResponse.builder()
                         .timeStamp(LocalDateTime.now().toString())
                         .data(Map.of("user", userService.getUserByEmail(user.getEmail()),
-                                "customer", customerService.searchCustomers(name.orElse(""), page.orElse(0), size.orElse(10))))
+                                "page", customerService.searchCustomers(name.orElse(""), page.orElse(0), size.orElse(10))))
                         .message("Customers retrieved")
                         .status(HttpStatus.OK)
                         .statusCode(HttpStatus.OK.value())
