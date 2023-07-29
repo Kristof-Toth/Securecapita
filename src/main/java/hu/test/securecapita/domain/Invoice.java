@@ -24,6 +24,7 @@ public class Invoice {
     private Long id;
     private String invoiceNumber;
     private String services;
+    private String status;
     private Date date;
     private String imageUrl;
     private double total;

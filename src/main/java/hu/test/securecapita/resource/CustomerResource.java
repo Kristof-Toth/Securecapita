@@ -154,7 +154,7 @@ public class CustomerResource {
         );
     }
 
-    @GetMapping("/invoice/addtocustomer/{id}")
+    @PostMapping("/invoice/addtocustomer/{id}")
     public ResponseEntity<HttpResponse> addInvoiceToCustomer(@AuthenticationPrincipal UserDTO user, @PathVariable("id") Long id, @RequestBody Invoice invoice){
         customerService.addInvoiceToCustomer(id, invoice);
         return ResponseEntity.ok(
@@ -162,7 +162,7 @@ public class CustomerResource {
                         .timeStamp(LocalDateTime.now().toString())
                         .data(Map.of("user", userService.getUserByEmail(user.getEmail()),
                                 "customers", customerService.getCustomers()))
-                        .message("Customers created")
+                        .message(String.format("Invoice added to customer with ID: %s", id))
                         .status(HttpStatus.OK)
                         .statusCode(HttpStatus.OK.value())
                         .build()
