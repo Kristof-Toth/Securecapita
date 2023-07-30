@@ -118,7 +118,7 @@ public class CustomerResource {
                 HttpResponse.builder()
                         .timeStamp(LocalDateTime.now().toString())
                         .data(Map.of("user", userService.getUserByEmail(user.getEmail()),
-                                "customers", customerService.getInvoices(page.orElse(0), size.orElse(10) )))
+                                "page", customerService.getInvoices(page.orElse(0), size.orElse(10) )))
                         .message("Invoices retrieved")
                         .status(HttpStatus.OK)
                         .statusCode(HttpStatus.OK.value())
