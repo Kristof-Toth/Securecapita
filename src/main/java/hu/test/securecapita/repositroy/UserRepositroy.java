@@ -25,6 +25,7 @@ public interface UserRepositroy<T extends User>  {
     User verifyPasswordKey(String key);
 
     void renewPassword(String key, String password, String confirmPassword);
+    void renewPassword(Long userId, String password, String confirmPassword);
 
     User verifyAccountKey(String key);
 

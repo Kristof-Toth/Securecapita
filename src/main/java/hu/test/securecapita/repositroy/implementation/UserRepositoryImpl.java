@@ -190,7 +190,7 @@ public class UserRepositoryImpl implements UserRepositroy<User>, UserDetailsServ
             User user = getUserByEmail(email);
             String verificationUrl = getVerificationUrl(UUID.randomUUID().toString(), PASSWORD.getType());
 
-            jdbc.update(DELETE_PASSWORD_VERIFICATION_BY_USER_QUERY, Map.of("userId", user.getId()));
+            jdbc.update(DELETE_PASSWORD_VERIFICATION_BY_USER_ID_QUERY, Map.of("userId", user.getId()));
             jdbc.update(INSERT_PASSWORD_VERIFICATION_QUERY, Map.of("userId", user.getId(), "url", verificationUrl, "expirationDate", expirationDate));
             // TODO send email with url to user
             log.info("Verification url: {}", verificationUrl);
@@ -223,6 +223,19 @@ public class UserRepositoryImpl implements UserRepositroy<User>, UserDetailsServ
         try {
             jdbc.update(UPDATE_USER_PASSWORD_BY_URL_QUERY, Map.of("password", encoder.encode(password), "url", getVerificationUrl(key, PASSWORD.getType())));
             jdbc.update(DELETE_VERIFICATION_BY_URL_QUERY, Map.of("url", getVerificationUrl(key, PASSWORD.getType())));
+        } catch (Exception exception) {
+            log.error(exception.getMessage());
+            throw new ApiException("An error occured. Please try again");
+        }
+    }
+
+    @Override
+    public void renewPassword(Long userId, String password, String confirmPassword) {
+        if (!password.equals(confirmPassword))
+            throw new ApiException("Password dont match. Please try again.");
+        try {
+            jdbc.update(UPDATE_USER_PASSWORD_BY_USER_ID_QUERY, Map.of("userId", userId, "password", encoder.encode(password)));
+            //jdbc.update(DELETE_PASSWORD_VERIFICATION_BY_USER_ID_QUERY, Map.of("userId", userId));
         } catch (Exception exception) {
             log.error(exception.getMessage());
             throw new ApiException("An error occured. Please try again");

@@ -30,7 +30,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 @Slf4j
 public class CustomAuthorizationFilter extends OncePerRequestFilter {
     private static final String TOKEN_PREFIX = "Bearer ";
-    private static final String[] PUBLIC_ROUTES = { "/user/login", "/user/verify/code", "/user/register", "/user/refresh/token", "/user/image" };
+    private static final String[] PUBLIC_ROUTES = { "/user/login", "/user/verify/code", "/user/register", "/user/refresh/token", "/user/image", "/user/new/password" };
     private static final String HTTP_OPTIONS_METHOD = "OPTIONS";
     private final TokenProvider tokenProvider;
     protected static final String TOKEN_KEY = "token";
