@@ -9,7 +9,7 @@ public class UserQuery {
     public static final String SELECT_USER_BY_USER_CODE_QUERY = "SELECT * FROM Users WHERE id = (SELECT user_id FROM TwoFactorVerifications WHERE code = :code)";
     public static final String DELETE_CODE = "DELETE FROM TwoFactorVerifications WHERE code = :code";
     public static final String SELECT_CODE_EXPIRATION_QUERY = "SELECT expiration_date < NOW() FROM TwoFactorVerifications WHERE code = :code";
-    public static final String DELETE_PASSWORD_VERIFICATION_BY_USER_QUERY = "DELETE FROM ResetPasswordVerifications WHERE user_id = :userId";
+    public static final String DELETE_PASSWORD_VERIFICATION_BY_USER_ID_QUERY = "DELETE FROM ResetPasswordVerifications WHERE user_id = :userId";
     public static final String INSERT_PASSWORD_VERIFICATION_QUERY = "INSERT INTO ResetPasswordVerifications (user_id, url, expiration_date) VALUES (:userId, :url, :expirationDate)";
     public static final String SELECT_EXPIRATION_BY_URL = "SELECT expiration_date < NOW() FROM ResetPasswordVerifications WHERE url = :url";
     public static final String SELECT_USER_BY_PASSWORD_URL_QUERY = "SELECT * FROM Users WHERE id = (SELECT user_id FROM ResetPasswordVerifications WHERE url = :url)";
@@ -23,6 +23,7 @@ public class UserQuery {
     public static final String UPDATE_USER_SETTINGS_QUERY = "UPDATE Users SET enabled = :enabled, non_locked = :notLocked WHERE id = :userId";
     public static final String TOGGLE_USER_MFA_QUERY = "UPDATE Users SET using_mfa = :isUsingMfa WHERE email = :email";
     public static final String UPDATE_USER_IMAGE_QUERY = "UPDATE Users SET image_url = :imageUrl WHERE id = :id";
+    public static final String UPDATE_USER_PASSWORD_BY_USER_ID_QUERY = "UPDATE Users SET password = :password WHERE id = :userId";
 
 
 

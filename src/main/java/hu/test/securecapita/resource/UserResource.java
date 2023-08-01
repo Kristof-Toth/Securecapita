@@ -8,10 +8,7 @@ import hu.test.securecapita.dtomapper.UserDTOMapper;
 import hu.test.securecapita.enumeration.EventType;
 import hu.test.securecapita.event.NewUserEvent;
 import hu.test.securecapita.exception.ApiException;
-import hu.test.securecapita.form.LoginForm;
-import hu.test.securecapita.form.SettingsForm;
-import hu.test.securecapita.form.UpdateForm;
-import hu.test.securecapita.form.UpdatePasswordForm;
+import hu.test.securecapita.form.*;
 import hu.test.securecapita.provider.TokenProvider;
 import hu.test.securecapita.service.EventService;
 import hu.test.securecapita.service.RoleService;
@@ -130,10 +127,9 @@ public class UserResource {
                         .build());
     }
 
-    @PostMapping("/resetpassword/{key}/{password}/{confirmPassword}")
-    public ResponseEntity<HttpResponse> resetPasswordWithKey(@PathVariable("key") String key, @PathVariable("password") String password,
-                                                          @PathVariable("confirmPassword") String confirmPassword) {
-        userService.renewPassword(key, password, confirmPassword);
+    @PutMapping("/new/password")
+    public ResponseEntity<HttpResponse> resetPassword(@RequestBody @Valid NewPasswordForm form) {
+        userService.updatePassword(form.getUserId(), form.getPassword(), form.getConfirmPassword());
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .timeStamp(LocalDateTime.now().toString())
