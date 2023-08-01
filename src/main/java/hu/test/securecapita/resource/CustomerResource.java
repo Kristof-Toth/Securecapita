@@ -5,11 +5,15 @@ import hu.test.securecapita.domain.HttpResponse;
 import hu.test.securecapita.domain.Invoice;
 import hu.test.securecapita.domain.User;
 import hu.test.securecapita.dto.UserDTO;
+import hu.test.securecapita.report.CustomerReport;
 import hu.test.securecapita.service.CustomerService;
 import hu.test.securecapita.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,8 +21,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import static org.springframework.http.HttpHeaders.CONTENT_DISPOSITION;
+import static org.springframework.http.MediaType.parseMediaType;
 
 @RestController
 @RequestMapping(path = "/customer")
@@ -169,5 +178,20 @@ public class CustomerResource {
                         .statusCode(HttpStatus.OK.value())
                         .build()
         );
+    }
+
+    @GetMapping("/download/report")
+    public ResponseEntity<Resource> downloadReport(){
+        List<Customer> customerList = new ArrayList<>();
+        customerService.getCustomers().iterator().forEachRemaining(customerList::add);
+
+        CustomerReport report = new CustomerReport(customerList);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("File-Name", "customer-report.xlsx");
+        headers.add(CONTENT_DISPOSITION, "attachment;File-Name=customer-report.xlsx");
+
+        return ResponseEntity.ok().contentType(parseMediaType("application/vnd.ms-excel"))
+                .headers(headers).body(report.export());
     }
 }
