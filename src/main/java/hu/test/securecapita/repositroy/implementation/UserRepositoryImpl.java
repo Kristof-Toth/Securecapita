@@ -10,6 +10,7 @@ import hu.test.securecapita.form.UpdateForm;
 import hu.test.securecapita.repositroy.RoleRepository;
 import hu.test.securecapita.repositroy.UserRepositroy;
 import hu.test.securecapita.rowmapper.UserRowMapper;
+import hu.test.securecapita.service.EmailService;
 import hu.test.securecapita.utils.SmsUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import static hu.test.securecapita.enumeration.RoleType.ROLE_USER;
 import static hu.test.securecapita.enumeration.VerificationType.ACCOUNT;
@@ -55,6 +57,7 @@ public class UserRepositoryImpl implements UserRepositroy<User>, UserDetailsServ
     private static final String DATE_FORMAT = "yyyy-MM-dd hh:mm:ss";
     private final NamedParameterJdbcTemplate jdbc;
     private final RoleRepository<Role> roleRepository;
+    private final EmailService emailService;
     private final SmsUtils smsUtils;
     private final BCryptPasswordEncoder encoder;
 
@@ -71,13 +74,12 @@ public class UserRepositoryImpl implements UserRepositroy<User>, UserDetailsServ
             user.setId(requireNonNull(holder.getKey()).longValue());
             // add role to the user
             roleRepository.addRoleToUser(user.getId(), ROLE_USER.name());
-
             // send verification url
             String verificationUrl = getVerificationUrl(UUID.randomUUID().toString(), ACCOUNT.getType());
             // save url in verification table
             jdbc.update(INSERT_ACCOUNT_VERIFICATION_URL_QUERY, Map.of("userId", user.getId(), "url", verificationUrl));
             // send email to user with verification url
-            //emailService.sendVerificationUrl(user.getEmail(), verificationUrl, ACCOUNT);
+            sendEmail(user.getFirstName(), user.getEmail(), verificationUrl, ACCOUNT);
             user.setEnabled(false);
             user.setNotLocked(true);
             // return the newly created user
@@ -88,7 +90,6 @@ public class UserRepositoryImpl implements UserRepositroy<User>, UserDetailsServ
             throw new ApiException("An error occured. Please try again");
         }
     }
-
 
     @Override
     public Collection<User> list(int page, int pageSize) {
@@ -192,7 +193,8 @@ public class UserRepositoryImpl implements UserRepositroy<User>, UserDetailsServ
 
             jdbc.update(DELETE_PASSWORD_VERIFICATION_BY_USER_ID_QUERY, Map.of("userId", user.getId()));
             jdbc.update(INSERT_PASSWORD_VERIFICATION_QUERY, Map.of("userId", user.getId(), "url", verificationUrl, "expirationDate", expirationDate));
-            // TODO send email with url to user
+
+            sendEmail(user.getFirstName(), email, verificationUrl, PASSWORD);
             log.info("Verification url: {}", verificationUrl);
         } catch (Exception exception) {
             throw new ApiException("An error occured. Please try again");
@@ -325,7 +327,7 @@ public class UserRepositoryImpl implements UserRepositroy<User>, UserDetailsServ
 
     private void saveImage(String email, MultipartFile image) {
         Path fileStorageLocation = Paths.get(System.getProperty("user.home") + "/Downloads/images/").toAbsolutePath().normalize();
-        if (!Files.exists(fileStorageLocation)){
+        if (!Files.exists(fileStorageLocation)) {
             try {
                 Files.createDirectories(fileStorageLocation);
             } catch (Exception exception) {
@@ -392,6 +394,30 @@ public class UserRepositoryImpl implements UserRepositroy<User>, UserDetailsServ
 
     private String getVerificationUrl(String key, String type) {
         return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/verify/" + type + "/" + key).toUriString();
+    }
 
+    private void sendEmail(String firstName, String email, String verificationUrl, VerificationType verificationType) {
+        CompletableFuture.runAsync(() -> {
+            emailService.sendVerificationEmail(firstName, email, verificationUrl, verificationType);
+        });
+        /*CompletableFuture.runAsync(() -> {
+            try {
+                emailService.sendVerificationEmail(firstName, email, verificationUrl, verificationType);
+            } catch (Exception exception) {
+                throw new ApiException("Unable to send email");
+            }
+
+        });*/
+
+        /*CompletableFuture<Void> future = CompletableFuture.runAsync(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    emailService.sendVerificationEmail(firstName, email, verificationUrl, verificationType);
+                } catch (Exception exception) {
+                    throw new ApiException("Unable to send email");
+                }
+            }
+        });*/
     }
 }
