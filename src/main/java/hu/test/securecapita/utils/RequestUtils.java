@@ -4,12 +4,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import nl.basjes.parse.useragent.UserAgent;
 import nl.basjes.parse.useragent.UserAgentAnalyzer;
 
+import static hu.test.securecapita.constant.Constants.USER_AGENT_HEADER;
+import static hu.test.securecapita.constant.Constants.X_FORWARDED_FOR_HEADER;
 import static nl.basjes.parse.useragent.UserAgent.*;
 
 public class RequestUtils {
-    private static final String USER_AGENT_HEADER = "user-agent";
-    private static final String X_FORWARDED_FOR_HEADER = "X-FORWARDED-FOR";
-
     public static String getIpAddress(HttpServletRequest request){
         String ipAddress = "Unknown IP";
 
