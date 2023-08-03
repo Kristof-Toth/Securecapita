@@ -33,6 +33,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+import static hu.test.securecapita.constant.Constants.TOKEN_PREFIX;
 import static hu.test.securecapita.enumeration.EventType.*;
 import static hu.test.securecapita.utils.ExceptionUtils.processError;
 import static hu.test.securecapita.utils.UserUtils.getAuthentication;
@@ -45,7 +46,6 @@ import static org.springframework.http.MediaType.IMAGE_PNG_VALUE;
 @RequestMapping(path = "/user")
 @RequiredArgsConstructor
 public class UserResource {
-    private static final String TOKEN_PREFIX = "Bearer ";
     private final UserService userService;
     private final RoleService roleService;
     private final EventService eventService;

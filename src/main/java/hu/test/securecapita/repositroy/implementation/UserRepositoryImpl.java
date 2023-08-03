@@ -39,14 +39,13 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+import static hu.test.securecapita.constant.Constants.DATE_FORMAT;
 import static hu.test.securecapita.enumeration.RoleType.ROLE_USER;
 import static hu.test.securecapita.enumeration.VerificationType.ACCOUNT;
 import static hu.test.securecapita.enumeration.VerificationType.PASSWORD;
 import static hu.test.securecapita.query.UserQuery.*;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-import static java.util.Arrays.stream;
 import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.time.DateUtils.addDays;
 
@@ -54,7 +53,6 @@ import static org.apache.commons.lang3.time.DateUtils.addDays;
 @RequiredArgsConstructor
 @Slf4j
 public class UserRepositoryImpl implements UserRepositroy<User>, UserDetailsService {
-    private static final String DATE_FORMAT = "yyyy-MM-dd hh:mm:ss";
     private final NamedParameterJdbcTemplate jdbc;
     private final RoleRepository<Role> roleRepository;
     private final EmailService emailService;
